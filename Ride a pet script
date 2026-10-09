@@ -1,0 +1,269 @@
+-- Egg Finder Pro
+-- LocalScript داخل StarterPlayerScripts
+-- Roblox Studio
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local oldGui = playerGui:FindFirstChild("EggFinderPro")
+if oldGui then
+    oldGui:Destroy()
+end
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "EggFinderPro"
+gui.ResetOnSpawn = false
+gui.DisplayOrder = 9999
+gui.IgnoreGuiInset = true
+gui.Parent = playerGui
+
+-- زر الفتح في منتصف الشاشة
+local toggle = Instance.new("TextButton")
+toggle.Name = "OpenButton"
+toggle.Size = UDim2.fromOffset(76, 76)
+toggle.AnchorPoint = Vector2.new(0.5, 0.5)
+toggle.Position = UDim2.new(0.5, 0, 0.5, 0)
+toggle.Text = "🎃"
+toggle.TextSize = 38
+toggle.Font = Enum.Font.GothamBold
+toggle.BackgroundColor3 = Color3.fromRGB(0, 210, 85)
+toggle.TextColor3 = Color3.new(1, 1, 1)
+toggle.BorderSizePixel = 0
+toggle.ZIndex = 100
+toggle.Parent = gui
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(1, 0)
+toggleCorner.Parent = toggle
+
+local toggleStroke = Instance.new("UIStroke")
+toggleStroke.Color = Color3.new(1, 1, 1)
+toggleStroke.Thickness = 3
+toggleStroke.Parent = toggle
+
+-- النافذة الرئيسية
+local panel = Instance.new("Frame")
+panel.Name = "MainPanel"
+panel.Size = UDim2.new(0.88, 0, 0.68, 0)
+panel.Position = UDim2.new(0.06, 0, 0.16, 0)
+panel.BackgroundColor3 = Color3.fromRGB(24, 29, 35)
+panel.BorderSizePixel = 0
+panel.Visible = false
+panel.ZIndex = 10
+panel.Parent = gui
+
+local panelConstraint = Instance.new("UISizeConstraint")
+panelConstraint.MinSize = Vector2.new(280, 320)
+panelConstraint.MaxSize = Vector2.new(430, 520)
+panelConstraint.Parent = panel
+
+local panelCorner = Instance.new("UICorner")
+panelCorner.CornerRadius = UDim.new(0, 14)
+panelCorner.Parent = panel
+
+local panelStroke = Instance.new("UIStroke")
+panelStroke.Color = Color3.fromRGB(0, 220, 100)
+panelStroke.Thickness = 2
+panelStroke.Parent = panel
+
+-- العنوان
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -55, 0, 48)
+title.Position = UDim2.fromOffset(10, 0)
+title.BackgroundTransparency = 1
+title.Text = "🥚 Egg Finder Pro"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.TextSize = 20
+title.Font = Enum.Font.GothamBold
+title.ZIndex = 11
+title.Parent = panel
+
+-- زر الإغلاق
+local close = Instance.new("TextButton")
+close.Size = UDim2.fromOffset(38, 38)
+close.Position = UDim2.new(1, -44, 0, 5)
+close.Text = "✕"
+close.TextSize = 20
+close.Font = Enum.Font.GothamBold
+close.BackgroundColor3 = Color3.fromRGB(185, 55, 55)
+close.TextColor3 = Color3.new(1, 1, 1)
+close.BorderSizePixel = 0
+close.ZIndex = 12
+close.Parent = panel
+
+Instance.new("UICorner", close).CornerRadius = UDim.new(0, 9)
+
+-- خانة البحث
+local search = Instance.new("TextBox")
+search.Size = UDim2.new(1, -20, 0, 42)
+search.Position = UDim2.fromOffset(10, 52)
+search.PlaceholderText = "ابحث عن egg أو بيض..."
+search.Text = ""
+search.ClearTextOnFocus = false
+search.TextSize = 16
+search.Font = Enum.Font.Gotham
+search.BackgroundColor3 = Color3.fromRGB(43, 49, 56)
+search.TextColor3 = Color3.new(1, 1, 1)
+search.PlaceholderColor3 = Color3.fromRGB(180, 185, 190)
+search.BorderSizePixel = 0
+search.ZIndex = 11
+search.Parent = panel
+
+Instance.new("UICorner", search).CornerRadius = UDim.new(0, 8)
+
+-- قائمة النتائج
+local results = Instance.new("ScrollingFrame")
+results.Name = "Results"
+results.Size = UDim2.new(1, -20, 1, -108)
+results.Position = UDim2.fromOffset(10, 102)
+results.BackgroundColor3 = Color3.fromRGB(33, 38, 44)
+results.BorderSizePixel = 0
+results.ScrollBarThickness = 6
+results.CanvasSize = UDim2.new()
+results.AutomaticCanvasSize = Enum.AutomaticSize.Y
+results.ZIndex = 11
+results.Parent = panel
+
+Instance.new("UICorner", results).CornerRadius = UDim.new(0, 8)
+
+local layout = Instance.new("UIListLayout")
+layout.Padding = UDim.new(0, 5)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Parent = results
+
+local padding = Instance.new("UIPadding")
+padding.PaddingTop = UDim.new(0, 6)
+padding.PaddingBottom = UDim.new(0, 6)
+padding.PaddingLeft = UDim.new(0, 5)
+padding.PaddingRight = UDim.new(0, 5)
+padding.Parent = results
+
+-- فتح وإغلاق القائمة
+toggle.Activated:Connect(function()
+    panel.Visible = not panel.Visible
+    toggle.Visible = not panel.Visible
+end)
+
+close.Activated:Connect(function()
+    panel.Visible = false
+    toggle.Visible = true
+end)
+
+-- العثور على جزء من العنصر
+local function findPart(obj)
+    if obj:IsA("BasePart") then
+        return obj
+    elseif obj:IsA("Model") then
+        return obj.PrimaryPart
+            or obj:FindFirstChildWhichIsA("BasePart", true)
+    end
+    return nil
+end
+
+-- تحديد البيضة والانتقال إليها
+local function selectEgg(obj)
+    local part = findPart(obj)
+    if not part or not part:IsDescendantOf(workspace) then
+        return
+    end
+
+    local oldHighlight = gui:FindFirstChild("EggHighlight")
+    if oldHighlight then
+        oldHighlight:Destroy()
+    end
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "EggHighlight"
+    highlight.Adornee = obj
+    highlight.FillColor = Color3.fromRGB(0, 255, 90)
+    highlight.OutlineColor = Color3.new(1, 1, 1)
+    highlight.FillTransparency = 0.4
+    highlight.Parent = gui
+
+    local character = player.Character
+    if character then
+        character:PivotTo(
+            CFrame.new(part.Position + Vector3.new(0, 5, 0))
+        )
+    end
+end
+
+-- مسح النتائج القديمة
+local function clearResults()
+    for _, child in ipairs(results:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+end
+
+-- البحث عن العناصر المطابقة
+local searchVersion = 0
+
+local function updateSearch()
+    searchVersion += 1
+    local thisSearch = searchVersion
+    local query = string.lower(search.Text)
+
+    clearResults()
+
+    if query == "" then
+        return
+    end
+
+    task.spawn(function()
+        local count = 0
+        local checked = 0
+
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if thisSearch ~= searchVersion then
+                return
+            end
+
+            checked += 1
+
+            local name = string.lower(obj.Name)
+            local isEgg = name:find("egg", 1, true)
+                or name:find("بيض", 1, true)
+
+            if isEgg and name:find(query, 1, true)
+                and findPart(obj) then
+
+                count += 1
+
+                local button = Instance.new("TextButton")
+                button.Name = "EggResult"
+                button.Size = UDim2.new(1, -4, 0, 40)
+                button.BackgroundColor3 = Color3.fromRGB(45, 105, 65)
+                button.TextColor3 = Color3.new(1, 1, 1)
+                button.TextSize = 15
+                button.Font = Enum.Font.Gotham
+                button.Text = "🥚  " .. obj.Name
+                button.BorderSizePixel = 0
+                button.LayoutOrder = count
+                button.ZIndex = 12
+                button.Parent = results
+
+                Instance.new("UICorner", button).CornerRadius =
+                    UDim.new(0, 7)
+
+                button.Activated:Connect(function()
+                    selectEgg(obj)
+                end)
+
+                if count >= 150 then
+                    break
+                end
+            end
+
+            if checked % 100 == 0 then
+                task.wait()
+            end
+        end
+    end)
+end
+
+search:GetPropertyChangedSignal("Text"):Connect(updateSearch)
+
+print("Egg Finder Pro loaded successfully")
